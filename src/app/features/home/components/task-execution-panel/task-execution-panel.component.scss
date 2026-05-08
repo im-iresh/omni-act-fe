@@ -1,0 +1,412 @@
+// ── Overlay ──────────────────────────────────────────────────────────────────
+.panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 10, 21, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  cursor: pointer;
+}
+
+// ── Panel Shell ───────────────────────────────────────────────────────────────
+.panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 201;
+  width: min(1100px, 95vw);
+  height: min(720px, 90vh);
+  background: rgba(8, 14, 28, 0.97);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 0 0 1px rgba(0, 212, 255, 0.06),
+    0 32px 80px rgba(0, 0, 0, 0.7),
+    0 0 60px rgba(0, 212, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// ── Header ───────────────────────────────────────────────────────────────────
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.panel__header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.panel__header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--color-accent-dim), var(--color-purple-dim));
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    color: var(--color-accent);
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.panel__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.panel__subtitle {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
+.panel__header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel__close-btn {
+  color: var(--color-muted) !important;
+  &:hover { color: var(--color-text) !important; }
+}
+
+// ── Body ─────────────────────────────────────────────────────────────────────
+.panel__body {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  flex: 1;
+  overflow: hidden;
+}
+
+// ── Intent Column ─────────────────────────────────────────────────────────────
+.panel__intent {
+  border-right: 1px solid var(--color-border);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.intent__section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: 12px;
+
+  mat-icon { font-size: 14px; width: 14px; height: 14px; color: var(--color-accent); }
+
+  .intent__check {
+    color: var(--color-active);
+    margin-left: auto;
+  }
+}
+
+.intent__stream-box {
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  min-height: 80px;
+  font-style: italic;
+  line-height: 1.7;
+}
+
+.intent__params {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.intent__params-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: 12px;
+}
+
+.intent__param-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child { border-bottom: none; }
+}
+
+.intent__param-key {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-muted);
+  width: 56px;
+  flex-shrink: 0;
+}
+
+.intent__param-val {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-accent);
+
+  &--wrap { white-space: normal; word-break: break-word; }
+}
+
+// ── Execution Column ──────────────────────────────────────────────────────────
+.panel__execution {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.exec__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.exec__header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exec__header-icon {
+  color: var(--color-accent);
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.exec__header-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.exec__counters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.exec__counter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+
+  mat-icon { font-size: 14px; width: 14px; height: 14px; }
+}
+
+.exec__progress {
+  height: 2px !important;
+  flex-shrink: 0;
+}
+
+// ── Step Feed ────────────────────────────────────────────────────────────────
+.exec__feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.exec__waiting {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.exec__waiting-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+// ── Step Row ─────────────────────────────────────────────────────────────────
+.step {
+  display: flex;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  position: relative;
+  transition: background var(--transition-fast);
+
+  &--running {
+    background: rgba(0, 212, 255, 0.04);
+    border-left: 2px solid var(--color-accent);
+
+    .step__shimmer {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0, 212, 255, 0.05) 50%,
+        transparent 100%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.8s linear infinite;
+      pointer-events: none;
+    }
+  }
+
+  &--completed {
+    .step__title { color: var(--color-text-secondary); }
+    .step__icon  { color: var(--color-active); }
+  }
+
+  &--error {
+    background: var(--color-error-dim);
+    border-left: 2px solid var(--color-error);
+    .step__icon { color: var(--color-error); }
+  }
+
+  &--pending {
+    opacity: 0.4;
+  }
+}
+
+.step__icon-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.step__icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--color-muted);
+  transition: color var(--transition-fast);
+
+  &--spin { animation: star-rotate 1s linear infinite; color: var(--color-accent); }
+}
+
+.step__connector {
+  width: 1px;
+  flex: 1;
+  min-height: 12px;
+  background: var(--color-border);
+  margin-top: 4px;
+}
+
+.step__content {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.step__row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.step__number {
+  font-size: 0.65rem;
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.step__title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--transition-fast);
+}
+
+.step__timestamp {
+  font-size: 0.65rem;
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.step__detail {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  margin-top: 3px;
+  padding-left: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.step__error {
+  font-size: 0.72rem;
+  color: var(--color-error);
+  margin-top: 4px;
+}
+
+// ── Completion States ────────────────────────────────────────────────────────
+.exec__complete,
+.exec__stopped {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.exec__complete {
+  background: var(--color-active-dim);
+  color: var(--color-active);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}
+
+.exec__stopped {
+  background: var(--color-idle-dim);
+  color: var(--color-idle);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}

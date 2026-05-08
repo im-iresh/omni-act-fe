@@ -1,0 +1,38 @@
+<nav class="navbar" role="navigation" aria-label="Main navigation">
+  <!-- Logo -->
+  <div class="navbar__logo" aria-label="OmniAct home">
+    <div class="navbar__logo-icon">
+      <mat-icon>auto_awesome</mat-icon>
+    </div>
+    <span class="navbar__logo-text">OmniAct</span>
+  </div>
+
+  <!-- Nav Links -->
+  <ul class="navbar__links" role="list">
+    @for (link of navLinks; track link.label) {
+      <li>
+        <button
+          class="navbar__link"
+          [class.navbar__link--active]="link.active"
+          [attr.aria-current]="link.active ? 'page' : null"
+        >{{ link.label }}</button>
+      </li>
+    }
+  </ul>
+
+  <!-- Right Side -->
+  <div class="navbar__right">
+    <div class="navbar__search" role="search">
+      <mat-icon class="navbar__search-icon" aria-hidden="true">search</mat-icon>
+      <input
+        class="navbar__search-input"
+        type="search"
+        placeholder="Search tasks..."
+        aria-label="Search tasks"
+      />
+    </div>
+    <button class="navbar__avatar" aria-label="User profile" mat-icon-button>
+      <mat-icon>account_circle</mat-icon>
+    </button>
+  </div>
+</nav>

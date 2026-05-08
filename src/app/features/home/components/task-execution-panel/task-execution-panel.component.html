@@ -1,0 +1,196 @@
+<div class="panel-overlay" (click)="onClose()" aria-hidden="true"></div>
+
+<div class="panel" [@panelEnter] role="dialog" aria-labelledby="panel-title" aria-modal="true">
+
+  <!-- Panel Header -->
+  <header class="panel__header">
+    <div class="panel__header-left">
+      <div class="panel__header-icon">
+        <mat-icon>auto_awesome</mat-icon>
+      </div>
+      <div>
+        <h2 class="panel__title" id="panel-title">{{ taskName }}</h2>
+        <p class="panel__subtitle mono">{{ taskId }}</p>
+      </div>
+    </div>
+    <div class="panel__header-right">
+      <app-status-badge
+        [status]="executionStatus() === 'executing' ? 'running'
+                : executionStatus() === 'completed' ? 'active'
+                : executionStatus() === 'intent' ? 'running'
+                : 'idle'"
+      />
+      @if (executionStatus() === 'executing' || executionStatus() === 'intent') {
+        <button
+          mat-button
+          class="btn-danger"
+          (click)="stopExecution()"
+          aria-label="Stop task execution"
+        >
+          <mat-icon>stop</mat-icon>
+          Stop
+        </button>
+      }
+      <button
+        mat-icon-button
+        class="panel__close-btn"
+        (click)="onClose()"
+        aria-label="Close execution panel"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </header>
+
+  <!-- Panel Body -->
+  <div class="panel__body">
+
+    <!-- LEFT: Intent Column -->
+    <aside class="panel__intent" aria-label="Intent recognition">
+
+      <div class="intent__section">
+        <div class="intent__section-label">
+          <mat-icon>psychology</mat-icon>
+          <span>Understanding your request</span>
+          @if (intentComplete()) {
+            <mat-icon class="intent__check" aria-label="Intent recognized">check_circle</mat-icon>
+          }
+        </div>
+
+        <div class="intent__stream-box" aria-live="polite" aria-label="Streaming intent analysis">
+          <app-typewriter
+            #typewriterRef
+            [fullText]="intentText()"
+            [active]="true"
+          />
+        </div>
+      </div>
+
+      @if (intentComplete() && intentParams()) {
+        <div class="intent__params" aria-label="Parsed task parameters">
+          <p class="intent__params-label">Task Parameters</p>
+          <div class="intent__param-row">
+            <span class="intent__param-key">Target</span>
+            <span class="intent__param-val">{{ intentParams().target }}</span>
+          </div>
+          <div class="intent__param-row">
+            <span class="intent__param-key">Action</span>
+            <span class="intent__param-val">{{ intentParams().action }}</span>
+          </div>
+          <div class="intent__param-row">
+            <span class="intent__param-key">Query</span>
+            <span class="intent__param-val intent__param-val--wrap">{{ intentParams().query }}</span>
+          </div>
+          <div class="intent__param-row">
+            <span class="intent__param-key">Output</span>
+            <span class="intent__param-val">{{ intentParams().outputFormat }}</span>
+          </div>
+        </div>
+      }
+
+    </aside>
+
+    <!-- RIGHT: Execution Feed Column -->
+    <main class="panel__execution" aria-label="Browser execution steps">
+
+      <!-- Feed Header -->
+      <div class="exec__header">
+        <div class="exec__header-left">
+          <mat-icon class="exec__header-icon">bolt</mat-icon>
+          <span class="exec__header-title">Browser Execution</span>
+        </div>
+        <div class="exec__counters" aria-live="polite">
+          <span class="exec__counter mono">
+            Steps: {{ completedSteps() }} / {{ totalSteps() }}
+          </span>
+          <span class="exec__counter mono">
+            <mat-icon>timer</mat-icon>
+            {{ elapsedFormatted() }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <mat-progress-bar
+        [value]="progressPercent()"
+        mode="determinate"
+        class="exec__progress"
+        [attr.aria-valuenow]="progressPercent()"
+        aria-label="Task progress"
+      />
+
+      <!-- Step Feed -->
+      <div class="exec__feed" #stepFeed role="log" aria-live="polite" aria-label="Execution step log">
+
+        @if (steps().length === 0 && executionStatus() === 'intent') {
+          <div class="exec__waiting">
+            <div class="exec__waiting-pulse"></div>
+            <span class="mono">Waiting for intent recognition to complete...</span>
+          </div>
+        }
+
+        @for (step of steps(); track trackByStep($index, step)) {
+          <div
+            class="step"
+            [class.step--running]="step.status === 'running'"
+            [class.step--completed]="step.status === 'completed'"
+            [class.step--error]="step.status === 'error'"
+            [class.step--pending]="step.status === 'pending'"
+            [@stepEnter]
+            [attr.aria-label]="'Step ' + step.stepNumber + ': ' + step.title + ' — ' + step.status"
+          >
+            <!-- Step Icon -->
+            <div class="step__icon-col">
+              <mat-icon
+                class="step__icon"
+                [class.step__icon--spin]="step.status === 'running'"
+                aria-hidden="true"
+              >{{ getStepIcon(step) }}</mat-icon>
+              @if (!$last) {
+                <div class="step__connector" aria-hidden="true"></div>
+              }
+            </div>
+
+            <!-- Step Content -->
+            <div class="step__content">
+              <div class="step__row">
+                <span class="step__number mono">{{ step.stepNumber | number:'2.0-0' }}</span>
+                <span class="step__title">{{ step.title }}</span>
+                @if (step.timestamp) {
+                  <span class="step__timestamp mono" [attr.aria-label]="'Timestamp ' + step.timestamp">
+                    {{ step.timestamp }}
+                  </span>
+                }
+              </div>
+              @if (step.detail) {
+                <div class="step__detail mono">→ {{ step.detail }}</div>
+              }
+              @if (step.status === 'running') {
+                <div class="step__shimmer" aria-hidden="true"></div>
+              }
+              @if (step.errorMessage) {
+                <div class="step__error mono" role="alert">{{ step.errorMessage }}</div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (executionStatus() === 'completed') {
+          <div class="exec__complete" role="status" [@stepEnter]>
+            <mat-icon>verified</mat-icon>
+            <span>Task completed successfully</span>
+          </div>
+        }
+
+        @if (executionStatus() === 'stopped') {
+          <div class="exec__stopped" role="status" [@stepEnter]>
+            <mat-icon>stop_circle</mat-icon>
+            <span>Task stopped by user</span>
+          </div>
+        }
+      </div>
+
+    </main>
+
+  </div>
+</div>

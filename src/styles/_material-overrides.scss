@@ -1,0 +1,78 @@
+// ── Global mat-form-field dark style ─────────────────────────────────────────
+.mat-mdc-form-field {
+  .mdc-text-field {
+    background-color: var(--color-surface) !important;
+    border-radius: var(--radius-md) !important;
+  }
+  .mdc-line-ripple { display: none; }
+  .mdc-text-field--outlined .mdc-notched-outline__leading,
+  .mdc-text-field--outlined .mdc-notched-outline__notch,
+  .mdc-text-field--outlined .mdc-notched-outline__trailing {
+    border-color: var(--color-border) !important;
+  }
+  input, textarea {
+    color: var(--color-text) !important;
+    font-family: var(--font-body) !important;
+    caret-color: var(--color-accent) !important;
+  }
+  .mat-mdc-form-field-focus-overlay { background: transparent; }
+  &.mat-focused .mdc-text-field--outlined .mdc-notched-outline__leading,
+  &.mat-focused .mdc-text-field--outlined .mdc-notched-outline__notch,
+  &.mat-focused .mdc-text-field--outlined .mdc-notched-outline__trailing {
+    border-color: var(--color-accent) !important;
+    box-shadow: 0 0 0 1px var(--color-accent);
+  }
+}
+
+// ── mat-chip ──────────────────────────────────────────────────────────────────
+.mat-mdc-chip {
+  background-color: var(--color-accent-dim) !important;
+  color: var(--color-accent) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.75rem !important;
+  border: 1px solid rgba(0, 212, 255, 0.2) !important;
+}
+
+// ── mat-progress-bar ─────────────────────────────────────────────────────────
+.mat-mdc-progress-bar {
+  --mdc-linear-progress-active-indicator-color: var(--color-accent);
+  --mdc-linear-progress-track-color: rgba(0, 212, 255, 0.1);
+  border-radius: 2px;
+}
+
+// ── Buttons ──────────────────────────────────────────────────────────────────
+.btn-primary {
+  background: linear-gradient(135deg, #00d4ff, #0090b8) !important;
+  color: #050a15 !important;
+  font-weight: 600 !important;
+  font-family: var(--font-body) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--glow-accent) !important;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast) !important;
+  &:hover {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.6) !important;
+    transform: translateY(-1px);
+  }
+}
+
+.btn-ghost {
+  background: transparent !important;
+  color: var(--color-text-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  font-family: var(--font-body) !important;
+  transition: border-color var(--transition-fast), color var(--transition-fast) !important;
+  &:hover {
+    border-color: var(--color-accent) !important;
+    color: var(--color-accent) !important;
+  }
+}
+
+.btn-danger {
+  background: var(--color-error-dim) !important;
+  color: var(--color-error) !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  border-radius: var(--radius-md) !important;
+  font-family: var(--font-body) !important;
+  &:hover { background: rgba(239, 68, 68, 0.25) !important; }
+}

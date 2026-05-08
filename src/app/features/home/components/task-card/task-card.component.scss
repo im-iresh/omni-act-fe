@@ -1,0 +1,83 @@
+.tkcard {
+  width: 200px; background: var(--color-surface);
+  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  display: flex; flex-direction: column; overflow: hidden;
+  transition: border-color var(--transition-fast);
+  &--running { border-color: rgba(0,212,255,0.18); }
+  &--history { opacity: 0.72; &:hover { opacity: 1; } }
+}
+
+.tkcard__header { display: flex; align-items: center; gap: 9px; padding: 12px 12px 9px; }
+
+.tkcard__icon {
+  width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+  background: var(--color-accent-dim); border: 1px solid rgba(0,212,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+  mat-icon { color: var(--color-accent); font-size: 16px; width: 16px; height: 16px; }
+  &--done {
+    background: var(--color-active-dim); border-color: rgba(34,197,94,0.12);
+    mat-icon { color: var(--color-active); }
+  }
+}
+
+.tkcard__titles { flex: 1; min-width: 0; }
+.tkcard__name { font-size: 0.78rem; font-weight: 500; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tkcard__sub  { font-size: 0.65rem; color: var(--color-muted); margin-top: 1px; text-transform: capitalize; }
+
+.tkcard__badge {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px;
+  font-size: 0.6rem; font-weight: 500; padding: 2px 7px; border-radius: 9px;
+  &--running { background: var(--color-accent-dim);  color: var(--color-accent);  border: 1px solid rgba(0,212,255,0.15); }
+  &--done    { background: var(--color-active-dim);  color: var(--color-active);  border: 1px solid rgba(34,197,94,0.15); }
+  &--stopped { background: rgba(100,116,139,0.08); color: #64748b; border: 1px solid rgba(100,116,139,0.12); }
+}
+
+.tkcard__badge-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+
+.tkcard__body { padding: 4px 12px 8px; flex: 1; }
+.tkcard__prompt {
+  font-size: 0.68rem; color: var(--color-text-secondary); line-height: 1.55;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.tkcard__step-preview {
+  padding: 6px 12px 8px; background: rgba(0,0,0,0.18);
+  border-top: 1px solid var(--color-border);
+}
+
+.tkcard__step-line {
+  font-size: 0.65rem; font-family: var(--font-mono); display: block;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px;
+  color: var(--color-muted);
+  &--running { color: var(--color-accent); }
+  &--done    { color: var(--color-active); }
+}
+
+.tkcard__progress { height: 2px; background: rgba(255,255,255,0.04); border-radius: 1px; }
+.tkcard__progress-fill {
+  height: 100%; background: var(--color-accent); border-radius: 1px;
+  transition: width 0.4s ease;
+  &--done { background: var(--color-active); }
+}
+
+.tkcard__footer {
+  display: flex; gap: 6px; padding: 8px 10px;
+  border-top: 1px solid var(--color-border);
+  button { flex: 1; font-size: 0.72rem !important; }
+  mat-icon { font-size: 13px !important; width: 13px !important; height: 13px !important; }
+}
+
+.tkcard__stop-btn { color: var(--color-error) !important; border-color: rgba(239,68,68,0.18) !important; }
+
+.tkcard__actions { display: flex; gap: 4px; padding: 5px 10px 8px; }
+
+.tkcard__action-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 3px;
+  padding: 3px 5px; background: rgba(255,255,255,0.02);
+  border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  color: var(--color-muted); font-size: 0.62rem; font-family: var(--font-body); cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  mat-icon { font-size: 12px; width: 12px; height: 12px; }
+  &--convert:hover { color: #a78bfa; border-color: rgba(124,58,237,0.25); }
+  &--danger:hover  { color: var(--color-error); border-color: rgba(239,68,68,0.25); }
+}

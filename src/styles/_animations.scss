@@ -1,0 +1,40 @@
+// ── Pulse (for status dots) ───────────────────────────────────────────────────
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%       { transform: scale(1.5); opacity: 0.7; }
+}
+
+// ── Shimmer (for running step rows) ──────────────────────────────────────────
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+// ── Glow breathe ─────────────────────────────────────────────────────────────
+@keyframes glow-breathe {
+  0%, 100% { box-shadow: var(--glow-accent); }
+  50%       { box-shadow: 0 0 20px rgba(0, 212, 255, 0.6), 0 0 40px rgba(0, 212, 255, 0.2); }
+}
+
+// ── Typewriter cursor ────────────────────────────────────────────────────────
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+// ── Slide up (step entry) ────────────────────────────────────────────────────
+@keyframes slide-up {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+// ── Star spin (decorative) ────────────────────────────────────────────────────
+@keyframes star-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+// ── Utility classes ───────────────────────────────────────────────────────────
+.animate-slide-up    { animation: slide-up 150ms ease-out forwards; }
+.animate-pulse-dot   { animation: pulse-dot 1.5s ease-in-out infinite; }
+.animate-glow-breathe{ animation: glow-breathe 2s ease-in-out infinite; }
