@@ -1,0 +1,110 @@
+<div class="modal-overlay" (click)="close.emit()" aria-hidden="true"></div>
+
+<div class="modal modal-shell" [@modalEnter] role="dialog"
+     [attr.aria-label]="isEdit ? 'Edit task' : 'Create task'"
+     aria-modal="true">
+
+  <!-- Header -->
+  <div class="modal__header">
+    <div class="modal__icon-box">
+      <mat-icon>edit_note</mat-icon>
+    </div>
+    <div class="modal__title-group">
+      <h2 class="modal__title">{{ isEdit ? 'Edit task' : 'New task' }}</h2>
+      <p class="modal__subtitle">Configure your automation task</p>
+    </div>
+    <button class="modal__close" (click)="close.emit()" aria-label="Close modal">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div class="modal__body" [formGroup]="form">
+
+    <!-- Title & Description -->
+    <div class="modal__row modal__row--half">
+      <div class="modal__field">
+        <label class="modal__label" for="te-title">Title <span class="modal__required">*</span></label>
+        <input id="te-title" class="modal__input" type="text"
+               formControlName="title" placeholder="e.g. Amazon Price Watcher"
+               aria-required="true" />
+      </div>
+      <div class="modal__field">
+        <label class="modal__label" for="te-desc">Description</label>
+        <input id="te-desc" class="modal__input" type="text"
+               formControlName="description" placeholder="Short summary of what this task does" />
+      </div>
+    </div>
+
+    <!-- Prompt -->
+    <div class="modal__field">
+      <label class="modal__label" for="te-prompt">Task prompt <span class="modal__required">*</span></label>
+      <textarea id="te-prompt" class="modal__textarea" formControlName="prompt" rows="4"
+                placeholder="Describe exactly what you want OmniAct to do..."
+                aria-required="true"></textarea>
+    </div>
+
+    <!-- Category -->
+    <div class="modal__field">
+      <label class="modal__label" for="te-category">Category</label>
+      <select id="te-category" class="modal__select" formControlName="category"
+              aria-label="Task category">
+        @for (cat of categories; track cat.value) {
+          <option [value]="cat.value">{{ cat.label }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Scheduler -->
+    <div class="modal__field">
+      <span class="modal__label" id="scheduler-group-label">Schedule</span>
+      <div class="modal__radio-group" role="radiogroup" aria-labelledby="scheduler-group-label">
+        @for (opt of [['none','None'],['daily','Daily'],['weekly','Weekly'],['custom','Custom']] ; track opt[0]) {
+          <label class="modal__radio-label">
+            <input type="radio" [value]="opt[0]" formControlName="schedulerType"
+                   [attr.aria-label]="opt[1] + ' schedule'" />
+            {{ opt[1] }}
+          </label>
+        }
+      </div>
+      @if (isCustomSchedule) {
+        <input class="modal__input modal__input--cron" type="text" formControlName="schedulerCron"
+               placeholder="Cron expression  e.g. 0 9 * * 1"
+               aria-label="Custom cron expression" />
+      }
+    </div>
+
+    <!-- Configuration -->
+    <div class="modal__field">
+      <span class="modal__label" id="config-group-label">Browser mode</span>
+      <div class="modal__radio-group" role="radiogroup" aria-labelledby="config-group-label">
+        <label class="modal__radio-label">
+          <input type="radio" value="headless" formControlName="configMode" aria-label="Headless mode" />
+          Headless
+        </label>
+        <label class="modal__radio-label">
+          <input type="radio" value="headed" formControlName="configMode" aria-label="Headed mode" />
+          Headed
+        </label>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="modal__footer">
+    <span class="modal__hint">Esc to cancel</span>
+    <div class="modal__actions">
+      <button class="btn-ghost" (click)="close.emit()" aria-label="Cancel">Cancel</button>
+      <button class="btn-secondary" (click)="onSave()" [disabled]="form.invalid"
+              aria-label="Save task">Save</button>
+      <button class="btn-secondary btn-secondary--purple" (click)="onTest()" [disabled]="form.invalid"
+              aria-label="Test task">Test</button>
+      <button class="btn-primary" (click)="onRun()" [disabled]="form.invalid"
+              aria-label="Save and run task">Run</button>
+      <button class="btn-publish" (click)="onPublish()" [disabled]="form.invalid"
+              aria-label="Publish task to store">Publish</button>
+    </div>
+  </div>
+
+</div>

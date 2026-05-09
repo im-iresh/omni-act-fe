@@ -1,4 +1,6 @@
 :root {
+  color-scheme: dark;
+
   // ── Colors ──────────────────────────────────────────────────────────────────
   --color-bg:           #050a15;
   --color-surface:      rgba(255, 255, 255, 0.04);
@@ -24,6 +26,9 @@
   --color-text-secondary: #94a3b8;
   --color-muted:        #64748b;
 
+  --color-overlay:      rgba(6, 9, 15, 0.78);
+  --navbar-bg:          rgba(5, 10, 21, 0.85);
+
   // ── Typography ──────────────────────────────────────────────────────────────
   --font-body:   'Space Grotesk', system-ui, sans-serif;
   --font-mono:   'JetBrains Mono', 'Fira Code', monospace;
@@ -48,4 +53,25 @@
   --transition-fast:   150ms ease-out;
   --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow:   500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// ── Light mode overrides ─────────────────────────────────────────────────────
+[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg:             #f0f4f8;
+  --color-surface:        rgba(0, 0, 0, 0.04);
+  --color-surface-hover:  rgba(0, 0, 0, 0.07);
+  --color-border:         rgba(0, 0, 0, 0.10);
+  --color-border-strong:  rgba(0, 0, 0, 0.18);
+
+  --color-text:           #0f172a;
+  --color-text-secondary: #475569;
+  --color-muted:          #94a3b8;
+
+  --glass-bg:             rgba(0, 0, 0, 0.03);
+  --glass-border:         1px solid rgba(0, 0, 0, 0.10);
+
+  --navbar-bg:            rgba(240, 244, 248, 0.90);
+  --color-overlay:        rgba(200, 210, 230, 0.70);
 }

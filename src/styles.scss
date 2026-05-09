@@ -16,6 +16,12 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+html[data-theme="light"],
+html[data-theme="light"] body {
+  background-color: var(--color-bg) !important;
+  color: var(--color-text);
+}
+
 // ─── Scrollbar ────────────────────────────────────────────────────────────────
 * {
   scrollbar-width: thin;
@@ -37,8 +43,8 @@ body::before {
   background:
     radial-gradient(ellipse at 20% 50%, rgba(0, 212, 255, 0.04) 0%, transparent 60%),
     radial-gradient(ellipse at 80% 20%, rgba(124, 58, 237, 0.05) 0%, transparent 60%),
-    linear-gradient(180deg, #050a15 0%, #0a0e1a 100%);
-  z-index: -2;
+    var(--color-bg);
+  z-index: -1;
   pointer-events: none;
 }
 
@@ -70,10 +76,7 @@ body::before {
     max-height: 240px;
   }
 
-  .navbar__links { display: none; }
-
-  .home__tiles { padding: 0 16px 32px; }
-  .home__hero  { padding: 32px 16px 24px; }
+  .home__body, .store { padding-left: 20px; padding-right: 20px; }
 }
 
 // ─── Mobile (≤ 600px) ─────────────────────────────────────────────────────
@@ -87,15 +90,15 @@ body::before {
     border-radius: 0 !important;
   }
 
-  .navbar {
-    padding: 0 16px;
-    gap: 16px;
-  }
-
+  .navbar { padding: 0 16px; gap: 12px; }
+  .navbar__links { display: none; }
   .navbar__search { display: none; }
 
-  .tile { width: 260px; }
-  .add-tile { width: 260px; }
+  .home__grid, .store__grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .home__body, .store { padding-left: 12px; padding-right: 12px; }
 }
 
 // ─── Error snackbar ────────────────────────────────────────────────────────

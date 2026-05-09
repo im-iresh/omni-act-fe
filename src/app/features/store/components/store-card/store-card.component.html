@@ -1,0 +1,23 @@
+<article class="scard" [attr.aria-label]="task.title">
+  <header class="scard__header">
+    <span class="scard__category" [class]="categoryClass"
+          role="img" [attr.aria-label]="categoryLabel + ' category'">
+      {{ categoryLabel }}
+    </span>
+  </header>
+
+  <div class="scard__body">
+    <h3 class="scard__title">{{ task.title }}</h3>
+    <p class="scard__description">{{ task.description }}</p>
+    <p class="scard__prompt">{{ task.prompt }}</p>
+  </div>
+
+  <footer class="scard__footer">
+    <button class="scard__btn scard__btn--run" (click)="run.emit()" aria-label="Run this task (creates a copy in Home)">
+      <mat-icon>play_arrow</mat-icon> Run
+    </button>
+    <button class="scard__btn scard__btn--dup" (click)="duplicate.emit()" aria-label="Duplicate to Home without running">
+      <mat-icon>content_copy</mat-icon> Duplicate
+    </button>
+  </footer>
+</article>

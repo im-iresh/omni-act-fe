@@ -7,7 +7,7 @@
   gap: 32px;
   padding: 0 32px;
   height: 64px;
-  background: rgba(5, 10, 21, 0.85);
+  background: var(--navbar-bg);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--color-border);
 
@@ -58,6 +58,7 @@
     font-weight: 500;
     border-radius: 20px;
     cursor: pointer;
+    text-decoration: none;
     transition: color var(--transition-fast), background var(--transition-fast);
 
     &:hover { color: var(--color-text); background: var(--color-surface); }
@@ -104,6 +105,11 @@
     width: 180px;
 
     &::placeholder { color: var(--color-muted); }
+  }
+
+  &__theme-toggle {
+    color: var(--color-text-secondary) !important;
+    &:hover { color: var(--color-accent) !important; }
   }
 
   &__avatar {

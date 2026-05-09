@@ -48,26 +48,47 @@
     <!-- LEFT: Intent Column -->
     <aside class="panel__intent" aria-label="Intent recognition">
 
-      <div class="intent__section">
-        <div class="intent__section-label">
-          <mat-icon>psychology</mat-icon>
-          <span>Understanding your request</span>
-          @if (intentComplete()) {
-            <mat-icon class="intent__check" aria-label="Intent recognized">check_circle</mat-icon>
-          }
-        </div>
-
-        <div class="intent__stream-box" aria-live="polite" aria-label="Streaming intent analysis">
-          <app-typewriter
-            #typewriterRef
-            [fullText]="intentText()"
-            [active]="true"
-          />
-        </div>
+      <!-- Section label -->
+      <div class="intent__section-label">
+        <mat-icon>psychology</mat-icon>
+        <span>Understanding your request</span>
+        @if (intentComplete()) {
+          <mat-icon class="intent__check" aria-label="Intent recognized">check_circle</mat-icon>
+        }
       </div>
 
-      @if (intentComplete() && intentParams()) {
-        <div class="intent__params" aria-label="Parsed task parameters">
+      <!-- Live event ticker (one event at a time, fades between) -->
+      @if (!intentComplete()) {
+        <div class="intent__ticker" aria-live="polite" aria-label="Intent analysis progress">
+          @if (currentEventLabel()) {
+            @for (label of [currentEventLabel()]; track label) {
+              <div class="intent__ticker-item" [@eventFade]>
+                <div class="intent__ticker-dot"></div>
+                <span>{{ label }}</span>
+              </div>
+            }
+          } @else {
+            <div class="intent__ticker-item intent__ticker-item--idle">
+              <div class="intent__ticker-dot"></div>
+              <span>Initializing…</span>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Final response as rendered markdown -->
+      @if (intentComplete() && intentFinalHtml()) {
+        <div
+          class="intent__final-md"
+          [innerHTML]="intentFinalHtml()"
+          [@stepEnter]
+          aria-label="Intent analysis result"
+        ></div>
+      }
+
+      <!-- Task Parameters (compact summary) -->
+      @if (intentComplete() && intentParams().action) {
+        <div class="intent__params" aria-label="Parsed task parameters" [@stepEnter]>
           <p class="intent__params-label">Task Parameters</p>
           <div class="intent__param-row">
             <span class="intent__param-key">Target</span>
@@ -85,6 +106,12 @@
             <span class="intent__param-key">Output</span>
             <span class="intent__param-val">{{ intentParams().outputFormat }}</span>
           </div>
+          @if (intentParams().confidence !== undefined) {
+            <div class="intent__param-row">
+              <span class="intent__param-key">Confidence</span>
+              <span class="intent__param-val">{{ (intentParams().confidence! * 100).toFixed(0) }}%</span>
+            </div>
+          }
         </div>
       }
 
@@ -189,6 +216,24 @@
           </div>
         }
       </div>
+
+      <!-- Results Section -->
+      @if (showResults() && (resultHtml() || hasFiles())) {
+        <div class="exec__results" role="region" aria-label="Task results" [@stepEnter]>
+          <div class="exec__results-header">
+            <mat-icon aria-hidden="true">summarize</mat-icon>
+            <span>Results</span>
+          </div>
+          @if (resultHtml()) {
+            <div class="exec__results-body" [innerHTML]="resultHtml()"></div>
+          }
+          @if (hasFiles()) {
+            <button class="exec__download-btn" (click)="downloadFiles()" aria-label="Download result files">
+              <mat-icon>download</mat-icon> Download files
+            </button>
+          }
+        </div>
+      }
 
     </main>
 

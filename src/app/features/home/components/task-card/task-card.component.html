@@ -1,80 +1,52 @@
 <article
   class="tkcard"
-  [class.tkcard--running]="task.status === 'running'"
-  [class.tkcard--history]="isHistory"
-  [attr.aria-label]="task.name + ' — ' + task.status"
+  [class.tkcard--running]="isRunning"
+  [attr.aria-label]="task.title + ' — ' + task.status"
 >
   <header class="tkcard__header">
-    <div class="tkcard__icon" [class.tkcard__icon--done]="isHistory">
+    <div class="tkcard__icon" [class.tkcard__icon--active]="task.status === 'active'">
       <mat-icon aria-hidden="true">
-        {{ task.status === 'running' ? 'radio_button_checked' : 'check_circle' }}
+        {{ isRunning ? 'radio_button_checked' : 'smart_toy' }}
       </mat-icon>
     </div>
     <div class="tkcard__titles">
-      <h3 class="tkcard__name">{{ task.name }}</h3>
-      <p class="tkcard__sub">{{ isHistory ? task.status : timeLabel }}</p>
+      <h3 class="tkcard__name">{{ task.title }}</h3>
+      <span class="tkcard__category" role="img" [attr.aria-label]="categoryLabel + ' category'">
+        {{ categoryLabel }}
+      </span>
     </div>
-    <span
-      class="tkcard__badge"
-      [class.tkcard__badge--running]="task.status === 'running'"
-      [class.tkcard__badge--done]="task.status === 'completed'"
-      [class.tkcard__badge--stopped]="task.status === 'stopped' || task.status === 'error'"
-      role="status"
-    >
-      <span class="tkcard__badge-dot"></span>
-      {{ task.status === 'running' ? 'Running' : task.status === 'completed' ? 'Done' : 'Stopped' }}
-    </span>
+    <app-status-badge [status]="task.status" />
   </header>
 
   <div class="tkcard__body">
-    <p class="tkcard__prompt">{{ task.prompt }}</p>
-  </div>
-
-  <div class="tkcard__step-preview">
-    @if (task.status === 'running') {
-      <span class="tkcard__step-line tkcard__step-line--running">
-        Step {{ task.completedSteps }} / {{ task.totalSteps }} running...
-      </span>
-    } @else if (task.resultSummary) {
-      <span class="tkcard__step-line tkcard__step-line--done">{{ task.resultSummary }}</span>
-    } @else {
-      <span class="tkcard__step-line">{{ task.completedSteps }} / {{ task.totalSteps }} steps</span>
-    }
-    <div class="tkcard__progress">
-      <div
-        class="tkcard__progress-fill"
-        [style.width.%]="progressPercent"
-        [class.tkcard__progress-fill--done]="task.status !== 'running'"
-      ></div>
-    </div>
+    <p class="tkcard__description">{{ task.description }}</p>
   </div>
 
   <footer class="tkcard__footer">
-    @if (task.status === 'running') {
-      <button mat-button class="btn-ghost" (click)="view.emit(task.id)" aria-label="View execution">
-        <mat-icon>visibility</mat-icon> View
-      </button>
-      <button mat-button class="btn-ghost tkcard__stop-btn" (click)="stop.emit(task.id)" aria-label="Stop task">
+    @if (isRunning) {
+      <button class="tkcard__btn tkcard__btn--stop" (click)="stop.emit()" aria-label="Stop task">
         <mat-icon>stop</mat-icon> Stop
       </button>
     } @else {
-      <button mat-button class="btn-ghost" (click)="view.emit(task.id)" aria-label="View results">
-        <mat-icon>visibility</mat-icon> Results
-      </button>
-      <button mat-button class="btn-ghost" (click)="rerun.emit()" aria-label="Re-run task">
-        <mat-icon>replay</mat-icon> Re-run
+      <button class="tkcard__btn tkcard__btn--run" (click)="run.emit()" aria-label="Run task">
+        <mat-icon>play_arrow</mat-icon> Run
       </button>
     }
-  </footer>
-
-  <div class="tkcard__actions" role="group" aria-label="More actions">
-    <button class="tkcard__action-btn tkcard__action-btn--convert" (click)="saveAsTemplate.emit()" aria-label="Save as template">
-      <mat-icon>bookmark_add</mat-icon> Save as template
+    <button class="tkcard__ghost-btn" (click)="history.emit()" aria-label="View run history">
+      <mat-icon>history</mat-icon> History
     </button>
-    @if (isHistory) {
-      <button class="tkcard__action-btn tkcard__action-btn--danger" (click)="delete.emit(task.id)" aria-label="Delete">
-        <mat-icon>delete_outline</mat-icon> Delete
-      </button>
-    }
-  </div>
+    <button class="tkcard__ghost-btn" (click)="edit.emit()" aria-label="Edit task">
+      <mat-icon>edit</mat-icon> Edit
+    </button>
+    <button class="tkcard__ghost-btn"
+            [class.tkcard__ghost-btn--published]="task.isPublished"
+            (click)="publish.emit()"
+            [attr.aria-label]="task.isPublished ? 'Unpublish from store' : 'Publish to store'">
+      <mat-icon>{{ task.isPublished ? 'cloud_done' : 'cloud_upload' }}</mat-icon>
+      {{ task.isPublished ? 'Published' : 'Publish' }}
+    </button>
+    <button class="tkcard__ghost-btn tkcard__ghost-btn--delete" (click)="delete.emit()" aria-label="Delete task">
+      <mat-icon>delete</mat-icon> Delete
+    </button>
+  </footer>
 </article>

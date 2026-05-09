@@ -9,13 +9,14 @@
 
   <!-- Nav Links -->
   <ul class="navbar__links" role="list">
-    @for (link of navLinks; track link.label) {
+    @for (item of navItems; track item.route) {
       <li>
-        <button
-          class="navbar__link"
-          [class.navbar__link--active]="link.active"
-          [attr.aria-current]="link.active ? 'page' : null"
-        >{{ link.label }}</button>
+        <a class="navbar__link"
+           [routerLink]="item.route"
+           routerLinkActive="navbar__link--active"
+           [attr.aria-label]="item.label + ' page'">
+          {{ item.label }}
+        </a>
       </li>
     }
   </ul>
@@ -31,6 +32,12 @@
         aria-label="Search tasks"
       />
     </div>
+    <button class="navbar__theme-toggle"
+            (click)="themeService.toggle()"
+            [attr.aria-label]="theme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+            mat-icon-button>
+      <mat-icon>{{ theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
     <button class="navbar__avatar" aria-label="User profile" mat-icon-button>
       <mat-icon>account_circle</mat-icon>
     </button>

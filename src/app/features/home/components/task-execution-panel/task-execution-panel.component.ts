@@ -11,13 +11,21 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { marked } from 'marked';
 
-import { TypewriterComponent } from '../../../../shared/components/typewriter/typewriter.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
-import { MockIntentStreamService } from '../../../../core/services/intent-stream.service';
-import { MockBrowserUseService } from '../../../../core/services/browser-use.service';
+import { INTENT_STREAM_SERVICE, BROWSER_USE_SERVICE } from '../../../../core/tokens/service.tokens';
 import { BrowserStep } from '../../../../core/models/browser-step.model';
-import { IntentResult } from '../../../../core/models/intent-result.model';
+import { IntentResult, IntentFinalResult } from '../../../../core/models/intent-result.model';
+import { TaskConfiguration } from '../../../../core/models/task.model';
+
+export interface ExecutionCompleteEvent {
+  runId: string;
+  taskId: string;
+  resultMarkdown?: string;
+  hasFiles: boolean;
+  completedSteps: number;
+}
 
 @Component({
   selector: 'app-task-execution-panel',
@@ -25,7 +33,7 @@ import { IntentResult } from '../../../../core/models/intent-result.model';
   imports: [
     CommonModule, MatIconModule, MatButtonModule,
     MatProgressBarModule, MatChipsModule, MatTooltipModule,
-    TypewriterComponent, StatusBadgeComponent
+    StatusBadgeComponent
   ],
   templateUrl: './task-execution-panel.component.html',
   styleUrls: ['./task-execution-panel.component.scss'],
@@ -33,13 +41,13 @@ import { IntentResult } from '../../../../core/models/intent-result.model';
   animations: [
     trigger('panelEnter', [
       transition(':enter', [
-        style({ opacity: 0, transform: 'scale(0.96) translateY(16px)' }),
+        style({ opacity: 0, transform: 'translate(-50%, -50%) scale(0.96) translateY(16px)' }),
         animate('350ms cubic-bezier(0.4, 0, 0.2, 1)',
-          style({ opacity: 1, transform: 'scale(1) translateY(0)' }))
+          style({ opacity: 1, transform: 'translate(-50%, -50%) scale(1) translateY(0)' }))
       ]),
       transition(':leave', [
         animate('250ms ease-in',
-          style({ opacity: 0, transform: 'scale(0.96) translateY(8px)' }))
+          style({ opacity: 0, transform: 'translate(-50%, -50%) scale(0.96) translateY(8px)' }))
       ])
     ]),
     trigger('stepEnter', [
@@ -47,37 +55,63 @@ import { IntentResult } from '../../../../core/models/intent-result.model';
         style({ opacity: 0, transform: 'translateY(8px)' }),
         animate('150ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
       ])
+    ]),
+    trigger('eventFade', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(8px)' }),
+        animate('200ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+      ]),
+      transition(':leave', [
+        animate('150ms ease-in', style({ opacity: 0, transform: 'translateY(-6px)' }))
+      ])
     ])
   ]
 })
 export class TaskExecutionPanelComponent implements OnInit, OnDestroy {
   @Input({ required: true }) taskId!: string;
+  @Input({ required: true }) runId!: string;
   @Input({ required: true }) prompt!: string;
   @Input() taskName = 'Task';
-  @Output() close = new EventEmitter<void>();
+  @Input() configuration: TaskConfiguration = { mode: 'headless' };
+
+  @Output() close    = new EventEmitter<void>();
+  @Output() complete = new EventEmitter<ExecutionCompleteEvent>();
 
   @ViewChild('stepFeed') stepFeedRef!: ElementRef<HTMLDivElement>;
-  @ViewChild('typewriterRef') typewriterRef!: TypewriterComponent;
 
-  private intentService = inject(MockIntentStreamService);
-  private browserService = inject(MockBrowserUseService);
-  private destroy$ = new Subject<void>();
+  private intentService  = inject(INTENT_STREAM_SERVICE);
+  private browserService = inject(BROWSER_USE_SERVICE);
+  private destroy$       = new Subject<void>();
 
-  intentText = signal('');
-  intentComplete = signal(false);
-  intentParams = signal<Partial<IntentResult>>({});
+  currentEventLabel  = signal('');
+  intentComplete     = signal(false);
+  intentParams       = signal<Partial<IntentResult>>({});
+  intentFinalResponse = signal('');
 
-  steps = signal<BrowserStep[]>([]);
-  elapsedSeconds = signal(0);
+  intentFinalHtml = computed((): string => {
+    const md = this.intentFinalResponse();
+    return md ? (marked.parse(md) as string) : '';
+  });
+
+  steps           = signal<BrowserStep[]>([]);
+  elapsedSeconds  = signal(0);
   executionStatus = signal<'intent' | 'executing' | 'completed' | 'stopped' | 'error'>('intent');
+  resultMarkdown  = signal<string | null>(null);
+  hasFiles        = signal(false);
 
-  totalSteps = signal(0);
+  resultHtml = computed((): string => {
+    const md = this.resultMarkdown();
+    return md ? (marked.parse(md) as string) : '';
+  });
+
+  totalSteps     = signal(0);
   completedSteps = computed(() => this.steps().filter(s => s.status === 'completed').length);
   progressPercent = computed(() =>
     this.totalSteps() > 0
       ? Math.round((this.completedSteps() / this.totalSteps()) * 100)
       : 0
   );
+  showResults = computed(() => this.executionStatus() === 'completed');
 
   elapsedFormatted = computed(() => {
     const s = this.elapsedSeconds();
@@ -107,10 +141,13 @@ export class TaskExecutionPanelComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (chunk) => {
           if (!chunk.done) {
-            this.intentText.update(t => t + chunk.token);
+            if (chunk.token) this.currentEventLabel.set(chunk.token);
           } else {
             this.intentComplete.set(true);
-            this.parseIntentParams();
+            if (chunk.finalResult?.finalResponse) {
+              this.intentFinalResponse.set(chunk.finalResult.finalResponse);
+            }
+            this.parseIntentParams(chunk.finalResult);
             this.startExecution();
           }
         },
@@ -118,18 +155,35 @@ export class TaskExecutionPanelComponent implements OnInit, OnDestroy {
       });
   }
 
-  private parseIntentParams(): void {
-    const p = this.prompt.toLowerCase();
-    this.intentParams.set({
-      target: p.includes('amazon') ? 'Amazon.in'
-             : p.includes('linkedin') ? 'LinkedIn.com'
-             : 'Web Browser',
-      action: p.includes('scrape') || p.includes('fetch') ? 'Scrape & Extract Data'
-             : p.includes('search') ? 'Search & Collect'
-             : 'Automated Browsing',
-      query: this.prompt.length > 60 ? this.prompt.slice(0, 57) + '…' : this.prompt,
-      outputFormat: 'Structured JSON'
-    });
+  private parseIntentParams(finalResult?: IntentFinalResult): void {
+    if (finalResult) {
+      this.intentParams.set({
+        target: this.detectTarget(this.prompt),
+        action: finalResult.detectedIntent,
+        query: finalResult.reasoning.length > 120
+          ? finalResult.reasoning.slice(0, 117) + '…'
+          : finalResult.reasoning,
+        outputFormat: finalResult.finalModelName,
+        confidence: finalResult.confidence,
+      });
+    } else {
+      this.intentParams.set({
+        target: this.detectTarget(this.prompt),
+        action: this.prompt.toLowerCase().includes('scrape') || this.prompt.toLowerCase().includes('fetch')
+          ? 'Scrape & Extract Data'
+          : this.prompt.toLowerCase().includes('search') ? 'Search & Collect'
+          : 'Automated Browsing',
+        query: this.prompt.length > 60 ? this.prompt.slice(0, 57) + '…' : this.prompt,
+        outputFormat: 'Structured JSON',
+      });
+    }
+  }
+
+  private detectTarget(prompt: string): string {
+    const p = prompt.toLowerCase();
+    if (p.includes('amazon')) return 'Amazon.in';
+    if (p.includes('linkedin')) return 'LinkedIn.com';
+    return 'Web Browser';
   }
 
   private startExecution(): void {
@@ -137,19 +191,31 @@ export class TaskExecutionPanelComponent implements OnInit, OnDestroy {
     this.totalSteps.set(12);
 
     this.browserService
-      .startTask(this.taskId, this.prompt)
+      .startTask(this.taskId, this.prompt, this.configuration)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (step) => this.handleStepUpdate(step),
         complete: () => {
           this.executionStatus.set('completed');
           if (this.timerSub) clearInterval(this.timerSub);
+          this.complete.emit({
+            runId: this.runId,
+            taskId: this.taskId,
+            resultMarkdown: this.resultMarkdown() ?? undefined,
+            hasFiles: this.hasFiles(),
+            completedSteps: this.completedSteps(),
+          });
         },
         error: () => this.executionStatus.set('error')
       });
   }
 
   private handleStepUpdate(step: BrowserStep): void {
+    if (step.resultMarkdown) this.resultMarkdown.set(step.resultMarkdown);
+    if (step.hasFiles)       this.hasFiles.set(true);
+
+    if (step.stepNumber === 0) return;
+
     this.steps.update(current => {
       const idx = current.findIndex(s => s.stepNumber === step.stepNumber);
       if (idx >= 0) {
@@ -181,6 +247,10 @@ export class TaskExecutionPanelComponent implements OnInit, OnDestroy {
     this.intentService.cancelStream();
     this.executionStatus.set('stopped');
     if (this.timerSub) clearInterval(this.timerSub);
+  }
+
+  downloadFiles(): void {
+    this.browserService.fetchFiles(this.taskId);
   }
 
   onClose(): void {

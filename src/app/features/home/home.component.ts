@@ -2,31 +2,30 @@ import { Component, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
-import { TemplateCardComponent } from './components/template-card/template-card.component';
 import { TaskCardComponent } from './components/task-card/task-card.component';
-import { NewTaskModalComponent } from './components/new-task-modal/new-task-modal.component';
-import { TemplateEditorModalComponent } from './components/template-editor-modal/template-editor-modal.component';
+import { TaskEditorModalComponent } from './components/task-editor-modal/task-editor-modal.component';
+import { TaskHistoryModalComponent } from './components/task-history-modal/task-history-modal.component';
 import { TaskExecutionPanelComponent } from './components/task-execution-panel/task-execution-panel.component';
-import { TaskTemplateService } from '../../core/services/task-template.service';
-import { TaskHistoryService } from '../../core/services/task-history.service';
-import { TaskTemplate, TaskTemplateForm } from '../../core/models/task-template.model';
-import { TaskHistoryEntry } from '../../core/models/task-history.model';
+import { TaskService } from '../../core/services/task.service';
+import { Task, TaskForm } from '../../core/models/task.model';
+import { TaskRun } from '../../core/models/task-run.model';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 export interface ActiveExecution {
   taskId: string;
+  runId: string;
   prompt: string;
   taskName: string;
-  templateId?: string;
+  configuration: Task['configuration'];
+  isTest: boolean;
 }
 
 export type ModalState =
   | { type: 'none' }
-  | { type: 'new-task' }
-  | { type: 'edit-template'; templateId: string }
-  | { type: 'new-template' }
-  | { type: 'save-as-template'; prefillPrompt: string; prefillName: string };
+  | { type: 'create' }
+  | { type: 'edit'; taskId: string }
+  | { type: 'history'; taskId: string };
 
 @Component({
   selector: 'app-home',
@@ -36,10 +35,9 @@ export type ModalState =
     MatIconModule,
     MatSnackBarModule,
     NavbarComponent,
-    TemplateCardComponent,
     TaskCardComponent,
-    NewTaskModalComponent,
-    TemplateEditorModalComponent,
+    TaskEditorModalComponent,
+    TaskHistoryModalComponent,
     TaskExecutionPanelComponent,
   ],
   templateUrl: './home.component.html',
@@ -59,123 +57,182 @@ export type ModalState =
   ]
 })
 export class HomeComponent {
-  private templateService = inject(TaskTemplateService);
-  private historyService  = inject(TaskHistoryService);
-  private snackBar        = inject(MatSnackBar);
+  private taskService = inject(TaskService);
+  private snackBar    = inject(MatSnackBar);
 
-  templates    = this.templateService.templates;
-  activeTasks  = computed(() => this.historyService.getRunning());
-  historyTasks = computed(() => this.historyService.getCompleted());
+  tasks = this.taskService.tasks;
 
   modal           = signal<ModalState>({ type: 'none' });
   activeExecution = signal<ActiveExecution | null>(null);
-  historyOpen     = signal(true);
 
   // ── Modal triggers ────────────────────────────────────────────────────────
-  openNewTask():     void { this.modal.set({ type: 'new-task' }); }
-  openNewTemplate(): void { this.modal.set({ type: 'new-template' }); }
-  closeModal():      void { this.modal.set({ type: 'none' }); }
+  onCreateTask(): void { this.modal.set({ type: 'create' }); }
+  closeModal():   void { this.modal.set({ type: 'none' }); }
 
-  openEditTemplate(templateId: string): void {
-    this.modal.set({ type: 'edit-template', templateId });
+  onEditTask(taskId: string): void {
+    this.modal.set({ type: 'edit', taskId });
   }
 
-  openSaveAsTemplate(entry: TaskHistoryEntry): void {
-    this.modal.set({
-      type: 'save-as-template',
-      prefillPrompt: entry.prompt,
-      prefillName: entry.name,
-    });
+  onShowHistory(taskId: string): void {
+    this.modal.set({ type: 'history', taskId });
   }
 
-  // ── Task execution ─────────────────────────────────────────────────────────
-  onRunTemplate(template: TaskTemplate): void {
-    const taskId = `task-${template.id}-${Date.now()}`;
-    this.historyService.add({
-      id: taskId,
-      name: template.name,
-      prompt: template.defaultPrompt,
+  // ── Task CRUD ─────────────────────────────────────────────────────────────
+  onSaveTask(payload: { id?: string; form: TaskForm }): void {
+    if (payload.id) {
+      this.taskService.update(payload.id, payload.form);
+    } else {
+      this.taskService.create(payload.form);
+    }
+    this.closeModal();
+  }
+
+  onDeleteTask(taskId: string): void {
+    this.taskService.delete(taskId);
+  }
+
+  onPublish(taskId: string): void {
+    const task = this.taskService.getById(taskId);
+    if (!task) return;
+    if (task.isPublished) {
+      this.taskService.unpublish(taskId);
+    } else {
+      this.taskService.publish(taskId);
+      this.snackBar.open('Task published to Store', 'Dismiss', {
+        duration: 3000, horizontalPosition: 'right', verticalPosition: 'bottom',
+      });
+    }
+  }
+
+  // ── Task execution ────────────────────────────────────────────────────────
+  private startExecution(task: Task, isTest = false): void {
+    const runId = `run-${task.id}-${Date.now()}`;
+    const run: TaskRun = {
+      id: runId, taskId: task.id,
       status: 'running',
       startedAt: new Date().toISOString(),
-      totalSteps: 12,
-      completedSteps: 0,
-      templateId: template.id,
-    });
+      totalSteps: 12, completedSteps: 0, hasFiles: false,
+    };
+    this.taskService.addRun(run);
+    this.taskService.setStatus(task.id, 'running');
     this.activeExecution.set({
-      taskId,
-      prompt: template.defaultPrompt,
-      taskName: template.name,
-      templateId: template.id,
+      taskId: task.id, runId,
+      prompt: task.prompt,
+      taskName: task.title,
+      configuration: task.configuration,
+      isTest,
     });
-    this.closeModal();
   }
 
-  onRunCustomPrompt(prompt: string): void {
-    const taskId = `task-custom-${Date.now()}`;
-    this.historyService.add({
-      id: taskId,
-      name: 'Custom task',
-      prompt,
-      status: 'running',
-      startedAt: new Date().toISOString(),
-      totalSteps: 12,
-      completedSteps: 0,
-    });
-    this.activeExecution.set({ taskId, prompt, taskName: 'Custom task' });
+  onRunTask(taskId: string): void {
+    const task = this.taskService.getById(taskId);
+    if (!task) return;
     this.closeModal();
+    this.startExecution(task, false);
+  }
+
+  onTestTask(taskId: string): void {
+    const task = this.taskService.getById(taskId);
+    if (!task) return;
+    this.startExecution(task, true);
+  }
+
+  onSaveAndRun(payload: { id?: string; form: TaskForm }): void {
+    let task: Task;
+    if (payload.id) {
+      this.taskService.update(payload.id, payload.form);
+      task = this.taskService.getById(payload.id)!;
+    } else {
+      task = this.taskService.create(payload.form);
+    }
+    this.closeModal();
+    this.startExecution(task, false);
+  }
+
+  onSaveAndTest(payload: { id?: string; form: TaskForm }): void {
+    let task: Task;
+    if (payload.id) {
+      this.taskService.update(payload.id, payload.form);
+      task = this.taskService.getById(payload.id)!;
+    } else {
+      task = this.taskService.create(payload.form);
+    }
+    this.startExecution(task, true);
+  }
+
+  onSaveAndPublish(payload: { id?: string; form: TaskForm }): void {
+    const form: TaskForm = { ...payload.form, isPublished: true };
+    if (payload.id) {
+      this.taskService.update(payload.id, form);
+    } else {
+      this.taskService.create(form);
+    }
+    this.closeModal();
+    this.snackBar.open('Task published to Store', 'Dismiss', {
+      duration: 3000, horizontalPosition: 'right', verticalPosition: 'bottom',
+    });
+  }
+
+  onStopTask(taskId: string): void {
+    this.taskService.setStatus(taskId, 'idle');
+    const exec = this.activeExecution();
+    if (exec?.taskId === taskId) {
+      const run = this.taskService.getRunById(exec.runId);
+      if (run) {
+        this.taskService.updateRun({
+          ...run, status: 'stopped', completedAt: new Date().toISOString()
+        });
+      }
+      if (!exec.isTest) this.activeExecution.set(null);
+    }
   }
 
   onExecutionClose(): void {
+    const exec = this.activeExecution();
+    if (exec) {
+      this.taskService.setStatus(exec.taskId, 'idle');
+      const run = this.taskService.getRunById(exec.runId);
+      if (run && run.status === 'running') {
+        this.taskService.updateRun({
+          ...run, status: 'stopped', completedAt: new Date().toISOString()
+        });
+      }
+    }
     this.activeExecution.set(null);
   }
 
-  onTaskStop(taskId: string): void {
-    const entry = this.historyService.entries().find(e => e.id === taskId);
-    if (entry) {
-      this.historyService.update({
-        ...entry,
-        status: 'stopped',
+  onExecutionComplete(result: { runId: string; taskId: string; resultMarkdown?: string; hasFiles: boolean; completedSteps: number }): void {
+    this.taskService.setStatus(result.taskId, 'idle');
+    const run = this.taskService.getRunById(result.runId);
+    if (run) {
+      this.taskService.updateRun({
+        ...run,
+        status: 'completed',
         completedAt: new Date().toISOString(),
+        resultMarkdown: result.resultMarkdown,
+        hasFiles: result.hasFiles,
+        completedSteps: result.completedSteps,
+        totalSteps: result.completedSteps,
       });
     }
-    if (this.activeExecution()?.taskId === taskId) {
-      this.activeExecution.set(null);
-    }
   }
 
-  onViewTask(taskId: string): void {
-    const entry = this.historyService.entries().find(e => e.id === taskId);
-    if (!entry) return;
-    this.activeExecution.set({ taskId, prompt: entry.prompt, taskName: entry.name });
+  // ── Computed helpers ──────────────────────────────────────────────────────
+  get editTask(): Task | undefined {
+    const m = this.modal();
+    return m.type === 'edit' ? this.taskService.getById(m.taskId) : undefined;
   }
 
-  onRerunTask(entry: TaskHistoryEntry): void {
-    const taskId = `task-rerun-${Date.now()}`;
-    this.historyService.add({
-      ...entry,
-      id: taskId,
-      status: 'running',
-      startedAt: new Date().toISOString(),
-      completedAt: undefined,
-      completedSteps: 0,
-    });
-    this.activeExecution.set({ taskId, prompt: entry.prompt, taskName: entry.name });
+  get historyTaskId(): string | undefined {
+    const m = this.modal();
+    return m.type === 'history' ? m.taskId : undefined;
   }
 
-  // ── Template CRUD ──────────────────────────────────────────────────────────
-  onSaveTemplate(payload: { id?: string; form: TaskTemplateForm }): void {
-    if (payload.id) {
-      this.templateService.update(payload.id, payload.form);
-    } else {
-      this.templateService.create(payload.form);
-    }
-    this.closeModal();
+  get historyTaskTitle(): string {
+    const m = this.modal();
+    if (m.type !== 'history') return '';
+    return this.taskService.getById(m.taskId)?.title ?? '';
   }
-
-  onDeleteTemplate(id: string):    void { this.templateService.delete(id); }
-  onDuplicateTemplate(id: string): void { this.templateService.duplicate(id); }
-  onDeleteHistory(id: string):     void { this.historyService.delete(id); }
-  toggleHistory():                 void { this.historyOpen.update(v => !v); }
 
   showError(message: string): void {
     this.snackBar.open(message, 'Dismiss', {
@@ -184,20 +241,5 @@ export class HomeComponent {
       horizontalPosition: 'right',
       verticalPosition: 'bottom',
     });
-  }
-
-  // ── Computed helpers for modal inputs ─────────────────────────────────────
-  get modalTemplate(): TaskTemplate | undefined {
-    const m = this.modal();
-    return m.type === 'edit-template'
-      ? this.templateService.getById(m.templateId)
-      : undefined;
-  }
-
-  get modalPrefill(): { prompt: string; name: string } | undefined {
-    const m = this.modal();
-    return m.type === 'save-as-template'
-      ? { prompt: m.prefillPrompt, name: m.prefillName }
-      : undefined;
   }
 }

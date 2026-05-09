@@ -1,6 +1,6 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TaskStatus } from '../../../core/models/task-template.model';
+import { TaskStatus } from '../../../core/models/task.model';
 
 @Component({
   selector: 'app-status-badge',
@@ -20,7 +20,7 @@ export class StatusBadgeComponent {
 
   get label(): string {
     const map: Record<TaskStatus, string> = {
-      active: 'Active', idle: 'Idle', running: 'Running', error: 'Error'
+      active: 'Active', idle: 'Idle', running: 'Running', stopped: 'Stopped', error: 'Error'
     };
     return map[this.status];
   }

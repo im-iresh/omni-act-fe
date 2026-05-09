@@ -1,153 +1,72 @@
 <div class="home">
   <app-navbar />
 
-  <div class="home__body">
+  <main class="home__body">
+    <div class="home__header">
+      <h1 class="home__title">My Tasks</h1>
+      <p class="home__subtitle">Your automation tasks, all in one place.</p>
+    </div>
 
-    <!-- ── Templates ─────────────────────────────────────────────────── -->
-    <section class="home__section" aria-labelledby="tpl-heading">
-      <div class="home__section-header">
-        <div class="home__section-title">
-          <mat-icon aria-hidden="true">auto_awesome</mat-icon>
-          <span id="tpl-heading">Templates</span>
-          <span class="home__count">{{ templates().length }}</span>
-        </div>
-        <button class="home__section-action" (click)="openNewTemplate()" aria-label="New template">
-          <mat-icon>add</mat-icon> New template
+    <div class="home__grid" role="list" @sectionEnter>
+
+      <!-- ── Add task card ─────────────────────────────────────────── -->
+      <div class="card-slot" role="listitem">
+        <button class="home__add-card" (click)="onCreateTask()" aria-label="Create new task">
+          <div class="home__add-card-icon"><mat-icon>add</mat-icon></div>
+          <span class="home__add-card-label">New task</span>
+          <span class="home__add-card-hint">Automate anything with AI</span>
         </button>
       </div>
 
-      @if (templates().length === 0) {
-        <div class="home__empty">
-          <mat-icon>auto_awesome</mat-icon>
-          <p>No task templates yet. Add your first template.</p>
-        </div>
-      }
-
-      <div class="home__card-row" role="list" @sectionEnter>
-        @for (tpl of templates(); track tpl.id) {
-          <div class="card-slot" role="listitem">
-            <app-template-card
-              [template]="tpl"
-              (run)="onRunTemplate($event)"
-              (edit)="openEditTemplate($event)"
-              (duplicate)="onDuplicateTemplate($event)"
-              (delete)="onDeleteTemplate($event)"
-            />
-          </div>
-        }
+      <!-- ── Task cards ────────────────────────────────────────────── -->
+      @for (task of tasks(); track task.id) {
         <div class="card-slot" role="listitem">
-          <button class="home__add-card" (click)="openNewTemplate()" aria-label="Create new template">
-            <div class="home__add-card-icon"><mat-icon>add</mat-icon></div>
-            <span class="home__add-card-label">New template</span>
-            <span class="home__add-card-hint">Save a reusable prompt</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Active tasks ──────────────────────────────────────────────── -->
-    <section class="home__section" aria-labelledby="tasks-heading">
-      <div class="home__section-header">
-        <div class="home__section-title">
-          <mat-icon aria-hidden="true">bolt</mat-icon>
-          <span id="tasks-heading">Active tasks</span>
-          <span class="home__count">{{ activeTasks().length }}</span>
-        </div>
-        <button class="home__new-task-btn" (click)="openNewTask()" aria-label="Create a new task">
-          <mat-icon>add</mat-icon> New task
-        </button>
-      </div>
-
-      @if (activeTasks().length === 0) {
-        <div class="home__empty-state">
-          <mat-icon>pending_actions</mat-icon>
-          <span>No active tasks — click <strong>New task</strong> to get started</span>
-        </div>
-      } @else {
-        <div class="home__card-row" role="list">
-          @for (task of activeTasks(); track task.id) {
-            <div class="card-slot" role="listitem">
-              <app-task-card
-                [task]="task"
-                (view)="onViewTask($event)"
-                (stop)="onTaskStop($event)"
-                (saveAsTemplate)="openSaveAsTemplate(task)"
-              />
-            </div>
-          }
+          <app-task-card
+            [task]="task"
+            (run)="onRunTask(task.id)"
+            (stop)="onStopTask(task.id)"
+            (edit)="onEditTask(task.id)"
+            (history)="onShowHistory(task.id)"
+            (publish)="onPublish(task.id)"
+            (delete)="onDeleteTask(task.id)"
+          />
         </div>
       }
-    </section>
 
-    <!-- ── History (collapsible) ──────────────────────────────────────── -->
-    <section class="home__section" aria-labelledby="hist-heading">
-      <button
-        class="home__history-toggle"
-        (click)="toggleHistory()"
-        [attr.aria-expanded]="historyOpen()"
-        aria-controls="history-body"
-      >
-        <div class="home__section-title">
-          <mat-icon aria-hidden="true">history</mat-icon>
-          <span id="hist-heading">History</span>
-          <span class="home__count">{{ historyTasks().length }}</span>
-        </div>
-        <mat-icon class="home__chevron" [class.home__chevron--open]="historyOpen()">
-          expand_more
-        </mat-icon>
-      </button>
+    </div>
+  </main>
 
-      @if (historyOpen()) {
-        <div id="history-body" class="home__card-row" role="list">
-          @if (historyTasks().length === 0) {
-            <div class="home__empty-state">
-              <mat-icon>inbox</mat-icon>
-              <span>No completed tasks yet</span>
-            </div>
-          }
-          @for (task of historyTasks(); track task.id) {
-            <div class="card-slot" role="listitem">
-              <app-task-card
-                [task]="task"
-                [isHistory]="true"
-                (view)="onViewTask($event)"
-                (rerun)="onRerunTask(task)"
-                (saveAsTemplate)="openSaveAsTemplate(task)"
-                (delete)="onDeleteHistory($event)"
-              />
-            </div>
-          }
-        </div>
-      }
-    </section>
-
-  </div>
-
-  <!-- ── Modals ─────────────────────────────────────────────────────────── -->
-  @if (modal().type === 'new-task') {
-    <app-new-task-modal
-      [templates]="templates()"
-      (run)="onRunCustomPrompt($event)"
+  <!-- ── Task editor modal ──────────────────────────────────────────── -->
+  @if (modal().type === 'create' || modal().type === 'edit') {
+    <app-task-editor-modal
+      [existingTask]="editTask"
+      (save)="onSaveTask($event)"
+      (run)="onSaveAndRun($event)"
+      (test)="onSaveAndTest($event)"
+      (publish)="onSaveAndPublish($event)"
       (close)="closeModal()"
     />
   }
 
-  @if (modal().type === 'edit-template' || modal().type === 'new-template' || modal().type === 'save-as-template') {
-    <app-template-editor-modal
-      [existingTemplate]="modalTemplate"
-      [prefill]="modalPrefill"
-      (save)="onSaveTemplate($event)"
+  <!-- ── Task history drawer ────────────────────────────────────────── -->
+  @if (modal().type === 'history' && historyTaskId) {
+    <app-task-history-modal
+      [taskId]="historyTaskId"
+      [taskTitle]="historyTaskTitle"
       (close)="closeModal()"
     />
   }
 
-  <!-- ── Execution panel ────────────────────────────────────────────────── -->
+  <!-- ── Execution panel ────────────────────────────────────────────── -->
   @if (activeExecution()) {
     <app-task-execution-panel
       [taskId]="activeExecution()!.taskId"
+      [runId]="activeExecution()!.runId"
       [prompt]="activeExecution()!.prompt"
       [taskName]="activeExecution()!.taskName"
+      [configuration]="activeExecution()!.configuration"
       (close)="onExecutionClose()"
+      (complete)="onExecutionComplete($event)"
     />
   }
 

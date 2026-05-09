@@ -1,3 +1,22 @@
+export interface IntentFinalResult {
+  query: string;
+  detectedIntent: string;
+  reasoning: string;
+  confidence: number;
+  stepsExecuted: number;
+  finalResponse: string;
+  intentModelName: string;
+  finalModelName: string;
+  success: boolean;
+}
+
+export interface IntentChunk {
+  token: string;
+  done: boolean;
+  eventType?: string;
+  finalResult?: IntentFinalResult;
+}
+
 export interface IntentResult {
   raw: string;
   target?: string;
@@ -5,9 +24,4 @@ export interface IntentResult {
   query?: string;
   outputFormat?: string;
   confidence?: number;
-}
-
-export interface IntentChunk {
-  token: string;
-  done: boolean;
 }

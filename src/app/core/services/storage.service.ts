@@ -1,139 +1,114 @@
 import { Injectable } from '@angular/core';
-import { TaskTemplate } from '../models/task-template.model';
-import { TaskHistoryEntry } from '../models/task-history.model';
+import { Task, TaskCategory } from '../models/task.model';
+import { TaskRun } from '../models/task-run.model';
 
 const KEYS = {
-  TEMPLATES: 'omniact_templates',
-  HISTORY:   'omniact_history',
+  TASKS:     'omniact_tasks',
+  TASK_RUNS: 'omniact_task_runs',
 } as const;
 
 @Injectable({ providedIn: 'root' })
 export class StorageService {
 
-  // ── Templates ──────────────────────────────────────────────────────────────
+  // ── Tasks ──────────────────────────────────────────────────────────────────
 
-  getTemplates(): TaskTemplate[] {
+  getTasks(): Task[] {
     try {
-      const raw = localStorage.getItem(KEYS.TEMPLATES);
-      return raw ? (JSON.parse(raw) as TaskTemplate[]) : this.seedTemplates();
+      const raw = localStorage.getItem(KEYS.TASKS);
+      return raw ? (JSON.parse(raw) as Task[]) : this.seedTasks();
     } catch {
-      return this.seedTemplates();
+      return this.seedTasks();
     }
   }
 
-  saveTemplate(template: TaskTemplate): void {
-    const all = this.getTemplates();
-    const idx = all.findIndex(t => t.id === template.id);
-    if (idx >= 0) { all[idx] = template; } else { all.push(template); }
-    localStorage.setItem(KEYS.TEMPLATES, JSON.stringify(all));
+  saveTask(task: Task): void {
+    const all = this.getTasks();
+    const idx = all.findIndex(t => t.id === task.id);
+    if (idx >= 0) { all[idx] = task; } else { all.push(task); }
+    localStorage.setItem(KEYS.TASKS, JSON.stringify(all));
   }
 
-  deleteTemplate(id: string): void {
-    const filtered = this.getTemplates().filter(t => t.id !== id);
-    localStorage.setItem(KEYS.TEMPLATES, JSON.stringify(filtered));
+  deleteTask(id: string): void {
+    const filtered = this.getTasks().filter(t => t.id !== id);
+    localStorage.setItem(KEYS.TASKS, JSON.stringify(filtered));
+    this.deleteRunsForTask(id);
   }
 
-  duplicateTemplate(id: string): TaskTemplate | null {
-    const original = this.getTemplates().find(t => t.id === id);
-    if (!original) return null;
-    const copy: TaskTemplate = {
-      ...original,
-      id: `tpl-${Date.now()}`,
-      name: `${original.name} (copy)`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    this.saveTemplate(copy);
-    return copy;
-  }
+  // ── Task Runs ──────────────────────────────────────────────────────────────
 
-  // ── History ────────────────────────────────────────────────────────────────
-
-  getHistory(): TaskHistoryEntry[] {
+  getTaskRuns(taskId?: string): TaskRun[] {
     try {
-      const raw = localStorage.getItem(KEYS.HISTORY);
-      return raw ? (JSON.parse(raw) as TaskHistoryEntry[]) : [];
+      const raw = localStorage.getItem(KEYS.TASK_RUNS);
+      const all = raw ? (JSON.parse(raw) as TaskRun[]) : [];
+      return taskId ? all.filter(r => r.taskId === taskId) : all;
     } catch {
       return [];
     }
   }
 
-  saveHistoryEntry(entry: TaskHistoryEntry): void {
-    const all = this.getHistory();
-    const idx = all.findIndex(h => h.id === entry.id);
-    if (idx >= 0) { all[idx] = entry; } else { all.unshift(entry); }
-    localStorage.setItem(KEYS.HISTORY, JSON.stringify(all));
+  saveTaskRun(run: TaskRun): void {
+    const all = this.getTaskRuns();
+    const idx = all.findIndex(r => r.id === run.id);
+    if (idx >= 0) { all[idx] = run; } else { all.unshift(run); }
+    localStorage.setItem(KEYS.TASK_RUNS, JSON.stringify(all));
   }
 
-  deleteHistoryEntry(id: string): void {
-    const filtered = this.getHistory().filter(h => h.id !== id);
-    localStorage.setItem(KEYS.HISTORY, JSON.stringify(filtered));
+  deleteTaskRun(id: string): void {
+    const filtered = this.getTaskRuns().filter(r => r.id !== id);
+    localStorage.setItem(KEYS.TASK_RUNS, JSON.stringify(filtered));
   }
 
-  // ── Export / Import ────────────────────────────────────────────────────────
-
-  exportTemplatesAsJson(): void {
-    const data = JSON.stringify(this.getTemplates(), null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `omniact_templates_${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  importTemplatesFromJson(jsonString: string): void {
-    const imported = JSON.parse(jsonString) as TaskTemplate[];
-    localStorage.setItem(KEYS.TEMPLATES, JSON.stringify(imported));
+  private deleteRunsForTask(taskId: string): void {
+    const filtered = this.getTaskRuns().filter(r => r.taskId !== taskId);
+    localStorage.setItem(KEYS.TASK_RUNS, JSON.stringify(filtered));
   }
 
   // ── Seed data ──────────────────────────────────────────────────────────────
 
-  private seedTemplates(): TaskTemplate[] {
+  private seedTasks(): Task[] {
     const now = new Date().toISOString();
-    const seeds: TaskTemplate[] = [
+    const seeds: Task[] = [
       {
-        id: 'tpl-amazon-scout',
-        name: 'Amazon Scout',
-        subtitle: 'Product data miner',
-        iconName: 'shopping_cart',
-        accentColor: '--color-accent',
-        defaultPrompt: 'Scrape top 50 wireless earbuds under ₹2000 from Amazon.in with prices, ratings, and reviews. Export as JSON.',
-        status: 'active',
-        tags: ['ecommerce', 'scraping'],
-        illustrationType: 'browser-scrape',
+        id: 'task-amazon-scout',
+        title: 'Amazon Scout',
+        description: 'Scrapes product listings with prices, ratings, and reviews.',
+        prompt: 'Scrape top 50 wireless earbuds under ₹2000 from Amazon.in with prices, ratings, and reviews. Export as JSON.',
+        category: 'data-scraping' as TaskCategory,
+        scheduler: { type: 'none' },
+        configuration: { mode: 'headless' },
+        status: 'idle',
+        isPublished: false,
         createdAt: now,
         updatedAt: now,
       },
       {
-        id: 'tpl-linkedin-harvester',
-        name: 'LinkedIn Harvester',
-        subtitle: 'Profile & lead extractor',
-        iconName: 'people',
-        accentColor: '--color-purple',
-        defaultPrompt: 'Find all software engineers in Bangalore with 3-5 years experience on LinkedIn and export their profiles.',
+        id: 'task-linkedin-harvester',
+        title: 'LinkedIn Harvester',
+        description: 'Extracts profiles and lead data from LinkedIn searches.',
+        prompt: 'Find all software engineers in Bangalore with 3-5 years experience on LinkedIn and export their profiles.',
+        category: 'social-media' as TaskCategory,
+        scheduler: { type: 'none' },
+        configuration: { mode: 'headed' },
         status: 'idle',
-        tags: ['social', 'lead-gen'],
-        illustrationType: 'social-orbit',
+        isPublished: false,
         createdAt: now,
         updatedAt: now,
       },
       {
-        id: 'tpl-price-tracker',
-        name: 'Price Tracker',
-        subtitle: 'E-commerce monitor',
-        iconName: 'trending_down',
-        accentColor: '--color-idle',
-        defaultPrompt: 'Monitor the price of iPhone 15 128GB on Flipkart daily and alert when it drops below ₹55,000.',
+        id: 'task-price-tracker',
+        title: 'Price Tracker',
+        description: 'Monitors e-commerce prices and alerts on drops.',
+        prompt: 'Monitor the price of iPhone 15 128GB on Flipkart daily and alert when it drops below ₹55,000.',
+        category: 'web-automation' as TaskCategory,
+        scheduler: { type: 'daily' },
+        configuration: { mode: 'headless' },
         status: 'idle',
-        tags: ['ecommerce', 'monitoring'],
-        illustrationType: 'custom',
+        isPublished: false,
         createdAt: now,
         updatedAt: now,
       },
     ];
-    localStorage.setItem(KEYS.TEMPLATES, JSON.stringify(seeds));
+    localStorage.setItem(KEYS.TASKS, JSON.stringify(seeds));
     return seeds;
   }
 }

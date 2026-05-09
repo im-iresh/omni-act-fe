@@ -1,0 +1,51 @@
+<div class="drawer-overlay" (click)="close.emit()" aria-hidden="true"></div>
+
+<div class="drawer" [@drawerEnter] role="dialog" aria-modal="true"
+     [attr.aria-label]="'Run history for ' + taskTitle">
+
+  <div class="drawer__header">
+    <div class="drawer__title-group">
+      <mat-icon aria-hidden="true">history</mat-icon>
+      <span class="drawer__title">Run history</span>
+    </div>
+    <p class="drawer__subtitle">{{ taskTitle }}</p>
+    <button class="drawer__close modal__close" (click)="close.emit()" aria-label="Close history">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="drawer__body">
+    @if (runs().length === 0) {
+      <div class="drawer__empty">
+        <mat-icon>inbox</mat-icon>
+        <p>No runs yet. Click Run on the task card to start one.</p>
+      </div>
+    }
+
+    <ul class="drawer__list" role="list">
+      @for (run of runs(); track run.id) {
+        <li class="run-item" role="listitem">
+          <div class="run-item__header">
+            <app-status-badge [status]="run.status === 'running' ? 'running' : run.status === 'completed' ? 'active' : run.status === 'stopped' ? 'stopped' : 'error'" />
+            <span class="run-item__time">{{ formatTime(run.startedAt) }}</span>
+            <span class="run-item__duration">{{ formatDuration(run) }}</span>
+          </div>
+          <div class="run-item__progress">
+            <span class="run-item__steps">
+              {{ run.completedSteps }} / {{ run.totalSteps }} steps
+            </span>
+            @if (run.hasFiles) {
+              <span class="run-item__files-badge">
+                <mat-icon>download</mat-icon> Files
+              </span>
+            }
+          </div>
+          @if (run.resultMarkdown) {
+            <pre class="run-item__result">{{ run.resultMarkdown }}</pre>
+          }
+        </li>
+      }
+    </ul>
+  </div>
+
+</div>

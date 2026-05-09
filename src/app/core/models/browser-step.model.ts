@@ -8,6 +8,11 @@ export interface BrowserStep {
   timestamp?: string;
   errorMessage?: string;
   durationMs?: number;
+  resultMarkdown?: string;
+  hasFiles?: boolean;
+  screenshot?: string;
+  thoughts?: string;
+  currentUrl?: string;
 }
 
 export interface TaskExecution {

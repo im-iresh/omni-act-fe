@@ -1,0 +1,39 @@
+<app-navbar />
+
+<main class="store">
+  <div class="store__header">
+    <h1 class="store__title">Task Store</h1>
+    <p class="store__subtitle">Discover and run tasks published by the community.</p>
+  </div>
+
+  @if (publishedTasks().length === 0) {
+    <div class="store__empty">
+      <mat-icon>storefront</mat-icon>
+      <p>No published tasks yet. Publish a task from Home to see it here.</p>
+    </div>
+  } @else {
+    <div class="store__grid" role="list" @gridEnter>
+      @for (task of publishedTasks(); track task.id) {
+        <div class="card-slot" role="listitem">
+          <app-store-card
+            [task]="task"
+            (run)="onRunFromStore(task)"
+            (duplicate)="onDuplicate(task)"
+          />
+        </div>
+      }
+    </div>
+  }
+</main>
+
+@if (activeExecution()) {
+  <app-task-execution-panel
+    [taskId]="activeExecution()!.taskId"
+    [runId]="activeExecution()!.runId"
+    [prompt]="activeExecution()!.prompt"
+    [taskName]="activeExecution()!.taskName"
+    [configuration]="activeExecution()!.configuration"
+    (close)="onExecutionClose()"
+    (complete)="onExecutionComplete($event)"
+  />
+}
