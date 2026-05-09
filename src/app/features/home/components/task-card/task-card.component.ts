@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { Task, CATEGORY_LABELS } from '../../../../core/models/task.model';
+import { TaskRun } from '../../../../core/models/task-run.model';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 
 @Component({
@@ -17,6 +18,7 @@ import { StatusBadgeComponent } from '../../../../shared/components/status-badge
 })
 export class TaskCardComponent {
   @Input({ required: true }) task!: Task;
+  @Input() lastRun: TaskRun | null = null;
 
   @Output() run     = new EventEmitter<void>();
   @Output() stop    = new EventEmitter<void>();
@@ -30,4 +32,10 @@ export class TaskCardComponent {
   }
 
   get isRunning(): boolean { return this.task.status === 'running'; }
+
+  get lastRunLabel(): string {
+    if (!this.lastRun) return '';
+    const steps = this.lastRun.completedSteps;
+    return `${this.lastRun.status} · ${steps} step${steps !== 1 ? 's' : ''}`;
+  }
 }

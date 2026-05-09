@@ -128,7 +128,7 @@
         </div>
         <div class="exec__counters" aria-live="polite">
           <span class="exec__counter mono">
-            Steps: {{ completedSteps() }} / {{ totalSteps() }}
+            Step {{ steps().length }}
           </span>
           <span class="exec__counter mono">
             <mat-icon>timer</mat-icon>
@@ -139,8 +139,8 @@
 
       <!-- Progress Bar -->
       <mat-progress-bar
+        [mode]="executionStatus() === 'completed' ? 'determinate' : 'indeterminate'"
         [value]="progressPercent()"
-        mode="determinate"
         class="exec__progress"
         [attr.aria-valuenow]="progressPercent()"
         aria-label="Task progress"

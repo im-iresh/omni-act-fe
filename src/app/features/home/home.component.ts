@@ -62,6 +62,14 @@ export class HomeComponent {
 
   tasks = this.taskService.tasks;
 
+  lastRunMap = computed(() => {
+    const map = new Map<string, TaskRun>();
+    for (const run of this.taskService.taskRuns()) {
+      if (!map.has(run.taskId)) map.set(run.taskId, run);
+    }
+    return map;
+  });
+
   modal           = signal<ModalState>({ type: 'none' });
   activeExecution = signal<ActiveExecution | null>(null);
 

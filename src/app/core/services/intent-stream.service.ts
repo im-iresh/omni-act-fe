@@ -3,6 +3,9 @@ import { Observable } from 'rxjs';
 import { IntentChunk, IntentFinalResult } from '../models/intent-result.model';
 import { environment } from '../../../environments/environment';
 
+/** Delay between mock intent stream events (ms). Increase for slower pacing, decrease for faster testing. */
+export const MOCK_INTENT_STREAM_DELAY_MS = 600;
+
 export abstract class IntentStreamService {
   abstract streamIntent(prompt: string): Observable<IntentChunk>;
   abstract cancelStream(): void;
@@ -47,7 +50,7 @@ export class MockIntentStreamService extends IntentStreamService {
           observer.complete();
           clearInterval(intervalId);
         }
-      }, 600);
+      }, MOCK_INTENT_STREAM_DELAY_MS);
       return () => clearInterval(intervalId);
     });
   }

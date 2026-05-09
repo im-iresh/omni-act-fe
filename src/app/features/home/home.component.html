@@ -23,6 +23,7 @@
         <div class="card-slot" role="listitem">
           <app-task-card
             [task]="task"
+            [lastRun]="lastRunMap().get(task.id) ?? null"
             (run)="onRunTask(task.id)"
             (stop)="onStopTask(task.id)"
             (edit)="onEditTask(task.id)"

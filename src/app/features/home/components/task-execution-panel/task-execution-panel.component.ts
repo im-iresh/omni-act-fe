@@ -104,7 +104,7 @@ export class TaskExecutionPanelComponent implements OnInit, OnDestroy {
     return md ? (marked.parse(md) as string) : '';
   });
 
-  totalSteps     = signal(0);
+  totalSteps     = computed(() => this.steps().length);
   completedSteps = computed(() => this.steps().filter(s => s.status === 'completed').length);
   progressPercent = computed(() =>
     this.totalSteps() > 0
@@ -188,7 +188,6 @@ export class TaskExecutionPanelComponent implements OnInit, OnDestroy {
 
   private startExecution(): void {
     this.executionStatus.set('executing');
-    this.totalSteps.set(12);
 
     this.browserService
       .startTask(this.taskId, this.prompt, this.configuration)

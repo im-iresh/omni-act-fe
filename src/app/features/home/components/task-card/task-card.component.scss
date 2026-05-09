@@ -79,6 +79,25 @@
   margin: 0;
 }
 
+.tkcard__last-run {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 14px 8px;
+  font-size: 0.65rem;
+  color: var(--color-muted);
+
+  &--completed { color: var(--color-active); }
+  &--stopped   { color: var(--color-idle); }
+  &--error     { color: var(--color-error); }
+}
+
+.tkcard__last-run-icon {
+  font-size: 11px;
+  width: 11px;
+  height: 11px;
+}
+
 .tkcard__footer {
   display: flex;
   align-items: center;

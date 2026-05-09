@@ -22,6 +22,13 @@
     <p class="tkcard__description">{{ task.description }}</p>
   </div>
 
+  @if (lastRun) {
+    <div class="tkcard__last-run" [class]="'tkcard__last-run--' + lastRun.status" aria-label="Last run status">
+      <mat-icon class="tkcard__last-run-icon">history</mat-icon>
+      <span class="tkcard__last-run-label">{{ lastRunLabel }}</span>
+    </div>
+  }
+
   <footer class="tkcard__footer">
     @if (isRunning) {
       <button class="tkcard__btn tkcard__btn--stop" (click)="stop.emit()" aria-label="Stop task">
